@@ -6,19 +6,30 @@ data Rotation = L Int
               deriving (Show, Eq)
 
 wrap :: Int -> Int
-wrap n = mod n 100
+wrap n = n `mod` 100
 
-rotate :: Int -> Rotation -> Int
-rotate x (L n) = wrap (x - n)
-rotate x (R n) = wrap (x + n)
+data Lock = Lock { position :: Int
+                 , clicks   :: Int
+                 } deriving (Show, Eq)
+
+rotate :: Lock -> Rotation -> Lock
+
+rotate lock (L n) = let pos       = (wrap (100 - position lock) + n)
+                        newClicks = (pos `div` 100)
+                     in Lock (wrap (100 - wrap pos)) (clicks lock + newClicks)
+
+rotate lock (R n) = let pos       = position lock + n
+                        newClicks = (pos `div` 100)
+                     in Lock (wrap pos) (clicks lock + newClicks)
 
 solve :: String -> String
 solve input = let rotations = parse input
-                  positions = scanl rotate 50 rotations
-               in (show . length . filter (==0)) positions
+                  lock      = foldl rotate (Lock 50 0) rotations
+               in show (clicks lock)
 
 parse :: String -> [Rotation]
 parse input = fmap (\case
                         ('L':num) -> L (read num)
                         ('R':num) -> R (read num)
                    ) (lines input)
+
