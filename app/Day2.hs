@@ -9,9 +9,12 @@ data ProductId = ProductId { first :: String
 getInvalidIds :: ProductId -> [Int]
 getInvalidIds (ProductId f l) = filter checkId idRange
     where idRange   = [read f .. read l + 1]
-          checkId i = let idString = show i
-                          (a, b)   = splitAt (length idString `div` 2) idString
-                       in a == b
+          checkId i = let idString   = show i
+                          maxSeqLen  = length idString `div` 2
+                          repeatSeqs = map (`take` idString)
+                                     $ filter ((==0) . (length idString `mod`))
+                                              [1..maxSeqLen]
+                       in any (all (uncurry (==)) . zip idString . cycle) repeatSeqs
 
 solve :: String -> String
 solve = show . sum . (parse >=> getInvalidIds)
